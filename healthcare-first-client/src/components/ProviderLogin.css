@@ -1,0 +1,91 @@
+.provider-login {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.login-background {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    var(--primary-blue) 0%, 
+    #3b82f6 25%, 
+    var(--secondary-green) 100%
+  );
+  opacity: 0.9;
+}
+
+.background-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.02) 50%, transparent 52%);
+  background-size: 
+    400px 400px,
+    300px 300px,
+    40px 40px;
+  animation: backgroundFloat 20s ease-in-out infinite;
+}
+
+@keyframes backgroundFloat {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-10px, -10px) rotate(1deg);
+  }
+  50% {
+    transform: translate(10px, -20px) rotate(-1deg);
+  }
+  75% {
+    transform: translate(-5px, 10px) rotate(0.5deg);
+  }
+}
+
+.login-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+    max-width: 100%;
+  }
+  
+  .login-main {
+    padding: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 0.5rem;
+  }
+}
+
+/* Focus management for accessibility */
+.provider-login :focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+} 
