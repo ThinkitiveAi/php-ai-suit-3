@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { checkEmailExists, checkPhoneExists, checkLicenseExists } from '../services/apiService'
 import { 
   UserIcon, 
   EmailIcon, 
@@ -15,14 +16,15 @@ import {
 } from './Icons'
 import './RegistrationForm.css'
 
-const specializations = [
+// Fallback data in case API fails
+const fallbackSpecializations = [
   'Cardiology', 'Dermatology', 'Pediatrics', 'Neurology', 'Orthopedics',
   'Psychiatry', 'Radiology', 'Anesthesiology', 'Emergency Medicine',
   'Family Medicine', 'Internal Medicine', 'Obstetrics & Gynecology',
   'Oncology', 'Ophthalmology', 'Pathology', 'Surgery', 'Urology'
 ]
 
-const practiceTypes = [
+const fallbackPracticeTypes = [
   'Private Practice', 'Hospital', 'Clinic', 'Academic Medical Center',
   'Community Health Center', 'Urgent Care', 'Specialty Center'
 ]
@@ -34,7 +36,10 @@ const RegistrationForm = ({
   error, 
   success, 
   currentStep, 
-  totalSteps 
+  totalSteps,
+  specializations = fallbackSpecializations,
+  practiceTypes = fallbackPracticeTypes,
+  dataLoading = false
 }) => {
   const [formData, setFormData] = useState({
     // Personal Information
@@ -69,6 +74,7 @@ const RegistrationForm = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [validatingFields, setValidatingFields] = useState({})
 
   const validateEmail = (email) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -93,6 +99,51 @@ const RegistrationForm = ({
     if (/[0-9]/.test(password)) strength++
     if (/[^A-Za-z0-9]/.test(password)) strength++
     return strength
+  }
+
+  // Enhanced validation with API checks
+  const validateFieldWithAPI = async (field, value) => {
+    if (!value) return ''
+    
+    setValidatingFields(prev => ({ ...prev, [field]: true }))
+    
+    try {
+      switch (field) {
+        case 'email':
+          if (validateEmail(value)) {
+            const result = await checkEmailExists(value)
+            if (result.exists) {
+              return 'An account with this email already exists'
+            }
+          }
+          break
+          
+        case 'phone':
+          if (validatePhone(value)) {
+            const result = await checkPhoneExists(value)
+            if (result.exists) {
+              return 'An account with this phone number already exists'
+            }
+          }
+          break
+          
+        case 'licenseNumber':
+          if (validateLicenseNumber(value)) {
+            const result = await checkLicenseExists(value)
+            if (result.exists) {
+              return 'This medical license number is already registered'
+            }
+          }
+          break
+      }
+    } catch (err) {
+      console.error('API validation error:', err)
+      // Don't show error for API failures, just log them
+    } finally {
+      setValidatingFields(prev => ({ ...prev, [field]: false }))
+    }
+    
+    return ''
   }
 
   const getStepFields = (step) => {
@@ -181,7 +232,7 @@ const RegistrationForm = ({
     return errors
   }
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = async (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     
     // Clear field error when user starts typing
@@ -192,6 +243,17 @@ const RegistrationForm = ({
     // Update password strength
     if (field === 'password') {
       setPasswordStrength(calculatePasswordStrength(value))
+    }
+
+    // Real-time API validation for specific fields (with debouncing)
+    if (['email', 'phone', 'licenseNumber'].includes(field) && value) {
+      clearTimeout(window[`${field}ValidationTimeout`])
+      window[`${field}ValidationTimeout`] = setTimeout(async () => {
+        const apiError = await validateFieldWithAPI(field, value)
+        if (apiError) {
+          setValidationErrors(prev => ({ ...prev, [field]: apiError }))
+        }
+      }, 1000) // 1 second debounce
     }
   }
 
@@ -291,6 +353,9 @@ const RegistrationForm = ({
             className={`form-input ${validationErrors.email ? 'error' : ''}`}
             disabled={isLoading}
           />
+          {validatingFields.email && (
+            <div className="validation-spinner">Checking...</div>
+          )}
         </div>
         {validationErrors.email && (
           <span className="field-error">{validationErrors.email}</span>
@@ -312,6 +377,9 @@ const RegistrationForm = ({
             className={`form-input ${validationErrors.phone ? 'error' : ''}`}
             disabled={isLoading}
           />
+          {validatingFields.phone && (
+            <div className="validation-spinner">Checking...</div>
+          )}
         </div>
         {validationErrors.phone && (
           <span className="field-error">{validationErrors.phone}</span>
@@ -370,15 +438,20 @@ const RegistrationForm = ({
 
       <div className="form-group">
         <label htmlFor="licenseNumber" className="form-label">Medical License Number</label>
-        <input
-          id="licenseNumber"
-          type="text"
-          value={formData.licenseNumber}
-          onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-          placeholder="Enter your medical license number"
-          className={`form-input ${validationErrors.licenseNumber ? 'error' : ''}`}
-          disabled={isLoading}
-        />
+        <div className="input-wrapper">
+          <input
+            id="licenseNumber"
+            type="text"
+            value={formData.licenseNumber}
+            onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
+            placeholder="Enter your medical license number"
+            className={`form-input ${validationErrors.licenseNumber ? 'error' : ''}`}
+            disabled={isLoading}
+          />
+          {validatingFields.licenseNumber && (
+            <div className="validation-spinner">Checking...</div>
+          )}
+        </div>
         {validationErrors.licenseNumber && (
           <span className="field-error">{validationErrors.licenseNumber}</span>
         )}
@@ -391,9 +464,11 @@ const RegistrationForm = ({
           value={formData.specialization}
           onChange={(e) => handleInputChange('specialization', e.target.value)}
           className={`form-select ${validationErrors.specialization ? 'error' : ''}`}
-          disabled={isLoading}
+          disabled={isLoading || dataLoading}
         >
-          <option value="">Select your specialization</option>
+          <option value="">
+            {dataLoading ? 'Loading specializations...' : 'Select your specialization'}
+          </option>
           {specializations.map(spec => (
             <option key={spec} value={spec}>{spec}</option>
           ))}
@@ -536,9 +611,11 @@ const RegistrationForm = ({
           value={formData.practiceType}
           onChange={(e) => handleInputChange('practiceType', e.target.value)}
           className={`form-select ${validationErrors.practiceType ? 'error' : ''}`}
-          disabled={isLoading}
+          disabled={isLoading || dataLoading}
         >
-          <option value="">Select practice type</option>
+          <option value="">
+            {dataLoading ? 'Loading practice types...' : 'Select practice type'}
+          </option>
           {practiceTypes.map(type => (
             <option key={type} value={type}>{type}</option>
           ))}
@@ -715,9 +792,9 @@ const RegistrationForm = ({
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={isLoading}
+                disabled={isLoading || dataLoading}
               >
-                Next
+                {dataLoading ? 'Loading...' : 'Next'}
               </button>
             ) : (
               <button
