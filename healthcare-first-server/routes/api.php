@@ -4,6 +4,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\ProviderAuthController;
 
+// CSRF cookie endpoint for Sanctum
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF cookie set']);
+});
+
+// Test route for CORS
+Route::get('/test-cors', function (Request $request) {
+    return response()->json([
+        'message' => 'CORS is working!',
+        'origin' => $request->headers->get('Origin'),
+        'timestamp' => now()
+    ]);
+});
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

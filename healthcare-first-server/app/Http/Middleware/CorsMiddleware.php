@@ -24,13 +24,26 @@ class CorsMiddleware
             'http://localhost:3000',
             'http://127.0.0.1:3000'
         ];
-
+        
         $origin = $request->headers->get('Origin');
         
-        // Check if the origin is in our allowed list, otherwise use wildcard for development
-        $allowOrigin = '*';
+        // Check if the origin is in our allowed list
+        $allowOrigin = null;
+        $allowCredentials = 'false';
+        
         if ($origin && in_array($origin, $allowedOrigins)) {
             $allowOrigin = $origin;
+            $allowCredentials = 'true';
+        } else {
+            // For development, allow any localhost origin with credentials
+            if ($origin && (str_contains($origin, 'localhost') || str_contains($origin, '127.0.0.1'))) {
+                $allowOrigin = $origin;
+                $allowCredentials = 'true';
+            } else {
+                // Default fallback - no credentials for unknown origins
+                $allowOrigin = '*';
+                $allowCredentials = 'false';
+            }
         }
 
         // Handle preflight OPTIONS requests
@@ -39,7 +52,7 @@ class CorsMiddleware
                 ->header('Access-Control-Allow-Origin', $allowOrigin)
                 ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
                 ->header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, X-Token-Auth, Authorization, Accept, Application, X-CSRF-TOKEN, Origin')
-                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Allow-Credentials', $allowCredentials)
                 ->header('Access-Control-Max-Age', '86400'); // 24 hours
         }
 
@@ -49,7 +62,7 @@ class CorsMiddleware
         $response->headers->set('Access-Control-Allow-Origin', $allowOrigin);
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, X-Token-Auth, Authorization, Accept, Application, X-CSRF-TOKEN, Origin');
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        $response->headers->set('Access-Control-Allow-Credentials', $allowCredentials);
         $response->headers->set('Access-Control-Max-Age', '86400');
 
         return $response;
