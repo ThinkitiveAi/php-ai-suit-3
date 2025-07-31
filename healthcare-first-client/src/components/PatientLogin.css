@@ -1,6 +1,6 @@
-.provider-login {
+.patient-login {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,7 +86,7 @@
 }
 
 .card-header h2 {
-  color: #667eea;
+  color: #2E7D32;
   font-size: 1.8rem;
   margin: 0 0 0.5rem 0;
   font-weight: 600;
@@ -150,9 +150,17 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
   transform: translateY(-1px);
+}
+
+.help-text {
+  display: block;
+  color: #888;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
 }
 
 .checkbox-group {
@@ -171,12 +179,12 @@
   width: auto;
   margin-right: 0.75rem;
   transform: scale(1.2);
-  accent-color: #667eea;
+  accent-color: #4CAF50;
 }
 
 .login-btn {
   width: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -189,12 +197,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
 }
 
 .login-btn:disabled {
@@ -228,33 +236,24 @@
 }
 
 .login-footer a {
-  color: #667eea;
+  color: #4CAF50;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .login-footer a:hover {
-  color: #764ba2;
+  color: #2E7D32;
   text-decoration: underline;
 }
 
-.patient-link {
-  color: #4CAF50 !important;
+.provider-link {
+  color: #666 !important;
   font-weight: 600 !important;
 }
 
-.patient-link:hover {
-  color: #388E3C !important;
-}
-
-.register-link {
-  color: #667eea !important;
-  font-weight: 600 !important;
-}
-
-.register-link:hover {
-  color: #764ba2 !important;
+.provider-link:hover {
+  color: #333 !important;
 }
 
 .divider {

@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loginProvider } from '../services/apiService'
-import './ProviderLogin.css'
+import './PatientLogin.css'
 
-const ProviderLogin = () => {
+const PatientLogin = () => {
   const [formData, setFormData] = useState({
-    credential: '',
+    credential: '', // email or patient_id
     password: '',
     rememberMe: false
   })
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const navigate = useNavigate()
@@ -24,60 +23,59 @@ const ProviderLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
+    setLoading(true)
     setError('')
     setSuccess(false)
 
     try {
-      console.log('Attempting login with:', formData)
-      
-      const response = await loginProvider({
-        credential: formData.credential,
-        password: formData.password,
-        rememberMe: formData.rememberMe
+      const response = await fetch('http://localhost:8001/api/patient/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          credential: formData.credential,
+          password: formData.password,
+          remember_me: formData.rememberMe
+        })
       })
-      
-      console.log('Login response:', response)
 
-      if (response.success) {
+      const data = await response.json()
+      
+      if (data.success) {
         setSuccess(true)
         
-        if (response.data && response.data.provider) {
-          localStorage.setItem('provider', JSON.stringify(response.data.provider))
-          localStorage.setItem('isAuthenticated', 'true')
+        // Store patient authentication data
+        if (data.data && data.data.patient) {
+          localStorage.setItem('patient', JSON.stringify(data.data.patient))
+          localStorage.setItem('isPatientAuthenticated', 'true')
           
-          if (response.data.token) {
-            localStorage.setItem('auth_token', response.data.token)
+          // Store the Sanctum token
+          if (data.data.token) {
+            localStorage.setItem('patient_auth_token', data.data.token)
           }
         }
         
+        // Redirect to patient dashboard
         setTimeout(() => {
-          console.log('Provider logged in successfully, redirecting to dashboard...')
-          navigate('/dashboard')
+          navigate('/patient/dashboard')
         }, 1000)
         
+      } else {
+        setError(data.message || 'Login failed')
       }
     } catch (err) {
-      console.error('Login error:', err)
-      
-      if (err.message.includes('Invalid credentials')) {
-        setError('Invalid email/phone or password. Please try again.')
-      } else if (err.message.includes('pending approval')) {
-        setError('Your account is pending approval. Please wait for administrator review.')
-      } else if (err.message.includes('rejected')) {
-        setError('Your account has been rejected. Please contact support.')
-      } else if (err.message.includes('suspended')) {
-        setError('Your account has been suspended. Please contact support.')
-      } else {
-        setError('Login failed. Please check your connection and try again.')
-      }
+      console.error('Patient login error:', err)
+      setError('Login failed. Please check your connection and try again.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="provider-login">
+    <div className="patient-login">
       <div className="login-background">
         <div className="background-pattern"></div>
       </div>
@@ -85,13 +83,13 @@ const ProviderLogin = () => {
       <div className="login-container">
         <div className="login-header">
           <h1>🏥 HealthCare Portal</h1>
-          <p>Provider Access</p>
+          <p>Patient Access</p>
         </div>
 
         <div className="login-card">
           <div className="card-header">
-            <h2>Provider Login</h2>
-            <p>Access your practice management dashboard</p>
+            <h2>Patient Login</h2>
+            <p>Access your medical records and appointments</p>
           </div>
 
           {error && (
@@ -102,22 +100,25 @@ const ProviderLogin = () => {
 
           {success && (
             <div className="success-message">
-              <span>Login successful! Redirecting to dashboard...</span>
+              <span>Login successful! Redirecting to your dashboard...</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-              <label>Email or Phone</label>
+              <label>Email or Patient ID</label>
               <input
                 type="text"
                 name="credential"
                 value={formData.credential}
                 onChange={handleInputChange}
-                placeholder="Enter your email or phone number"
+                placeholder="Enter your email or Patient ID (e.g., PAT123456)"
                 required
-                disabled={isLoading}
+                disabled={loading}
               />
+              <small className="help-text">
+                You can use either your email address or your Patient ID
+              </small>
             </div>
 
             <div className="form-group">
@@ -129,7 +130,7 @@ const ProviderLogin = () => {
                 onChange={handleInputChange}
                 placeholder="Enter your password"
                 required
-                disabled={isLoading}
+                disabled={loading}
               />
             </div>
 
@@ -140,15 +141,15 @@ const ProviderLogin = () => {
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={loading}
                 />
                 <span className="checkmark"></span>
                 Remember me
               </label>
             </div>
 
-            <button type="submit" disabled={isLoading} className="login-btn">
-              {isLoading ? (
+            <button type="submit" disabled={loading} className="login-btn">
+              {loading ? (
                 <>
                   <div className="spinner"></div>
                   Signing In...
@@ -161,37 +162,30 @@ const ProviderLogin = () => {
 
           <div className="login-footer">
             <p>
-              <a href="/forgot-password">Forgot your password?</a>
+              <a href="/patient/forgot-password">Forgot your password?</a>
             </p>
             <div className="divider">
               <span>or</span>
             </div>
             <p>
-              Don't have an account? 
-              <a href="/register" className="register-link"> Register here</a>
-            </p>
-            <div className="divider">
-              <span>or</span>
-            </div>
-            <p>
-              Are you a patient? 
-              <a href="/patient/login" className="patient-link"> Patient Login</a>
+              Are you a healthcare provider? 
+              <a href="/login" className="provider-link"> Provider Login</a>
             </p>
           </div>
         </div>
 
         <div className="login-info">
           <div className="info-card">
-            <h3>👨‍⚕️ Practice Management</h3>
-            <p>Manage your patients, appointments, and medical records</p>
+            <h3>🔒 Secure Access</h3>
+            <p>Your medical information is protected with enterprise-grade security</p>
           </div>
           <div className="info-card">
-            <h3>📊 Analytics Dashboard</h3>
-            <p>Track your practice performance and patient outcomes</p>
+            <h3>📱 24/7 Access</h3>
+            <p>View your health records, appointments, and test results anytime</p>
           </div>
           <div className="info-card">
-            <h3>🔒 Secure & HIPAA Compliant</h3>
-            <p>Enterprise-grade security for your medical practice</p>
+            <h3>👨‍⚕️ Direct Communication</h3>
+            <p>Connect with your healthcare provider easily and securely</p>
           </div>
         </div>
       </div>
@@ -199,4 +193,4 @@ const ProviderLogin = () => {
   )
 }
 
-export default ProviderLogin 
+export default PatientLogin 

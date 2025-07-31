@@ -131,11 +131,14 @@ const ProviderDashboard = () => {
           <div className="dashboard-card">
             <h3>Quick Actions</h3>
             <div className="action-buttons">
-              <button className="action-btn">
-                📅 View Appointments
+              <button className="action-btn" onClick={() => navigate('/provider/patients')}>
+                👥 Manage Patients
+              </button>
+              <button className="action-btn" onClick={() => navigate('/provider/patients/create')}>
+                ➕ Add New Patient
               </button>
               <button className="action-btn">
-                👥 Manage Patients
+                📅 View Appointments
               </button>
               <button className="action-btn">
                 ⚙️ Settings

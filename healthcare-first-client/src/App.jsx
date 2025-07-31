@@ -3,10 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ProviderLogin from './components/ProviderLogin'
 import ProviderRegistration from './components/ProviderRegistration'
 import ProviderDashboard from './components/ProviderDashboard'
+import PatientLogin from './components/PatientLogin'
+import PatientDashboard from './components/PatientDashboard'
+import PatientManagement from './components/PatientManagement'
+import CreatePatient from './components/CreatePatient'
+import LandingPage from './components/LandingPage'
 import './App.css'
 
-// Protected Route component
-const ProtectedRoute = ({ children }) => {
+// Protected Route component for providers
+const ProtectedProviderRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
   const token = localStorage.getItem('auth_token')
   
@@ -17,22 +22,65 @@ const ProtectedRoute = ({ children }) => {
   return children
 }
 
+// Protected Route component for patients
+const ProtectedPatientRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('isPatientAuthenticated') === 'true'
+  const token = localStorage.getItem('patient_auth_token')
+  
+  if (!isAuthenticated || !token) {
+    return <Navigate to="/patient/login" replace />
+  }
+  
+  return children
+}
+
 function App() {
   return (
     <div className="App">
       <Router>
         <Routes>
+          {/* Provider Routes */}
           <Route path="/login" element={<ProviderLogin />} />
           <Route path="/register" element={<ProviderRegistration />} />
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedProviderRoute>
                 <ProviderDashboard />
-              </ProtectedRoute>
+              </ProtectedProviderRoute>
             } 
           />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route 
+            path="/provider/patients" 
+            element={
+              <ProtectedProviderRoute>
+                <PatientManagement />
+              </ProtectedProviderRoute>
+            } 
+          />
+          <Route 
+            path="/provider/patients/create" 
+            element={
+              <ProtectedProviderRoute>
+                <CreatePatient />
+              </ProtectedProviderRoute>
+            } 
+          />
+
+          {/* Patient Routes */}
+          <Route path="/patient/login" element={<PatientLogin />} />
+          <Route path="/patient" element={<Navigate to="/patient/login" replace />} />
+          <Route 
+            path="/patient/dashboard" 
+            element={
+              <ProtectedPatientRoute>
+                <PatientDashboard />
+              </ProtectedPatientRoute>
+            } 
+          />
+          
+          {/* Default Routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

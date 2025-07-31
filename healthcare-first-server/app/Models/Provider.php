@@ -222,4 +222,20 @@ class Provider extends Authenticatable
             'Specialty Center'
         ];
     }
+
+    /**
+     * Relationship: Patients assigned to this provider
+     */
+    public function patients()
+    {
+        return $this->hasMany(Patient::class, 'assigned_provider_id');
+    }
+
+    /**
+     * Relationship: Patients created by this provider
+     */
+    public function createdPatients()
+    {
+        return $this->hasMany(Patient::class, 'created_by_provider_id');
+    }
 }
