@@ -39,7 +39,7 @@ Route::prefix('provider')->group(function () {
 });
 
 // Protected routes (authentication required)
-Route::prefix('provider')->middleware('auth:provider')->group(function () {
+Route::prefix('provider')->middleware(['auth:sanctum,provider'])->group(function () {
     Route::post('/logout', [ProviderAuthController::class, 'logout']);
     Route::get('/profile', [ProviderAuthController::class, 'profile']);
     Route::put('/profile', [ProviderAuthController::class, 'updateProfile']);

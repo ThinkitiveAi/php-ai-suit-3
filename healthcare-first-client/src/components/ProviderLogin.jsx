@@ -32,27 +32,28 @@ const ProviderLogin = () => {
       if (response.success) {
         setSuccess(true)
         
-        // Store provider data in localStorage for session management
+        // Store authentication data in localStorage
         if (response.data && response.data.provider) {
           localStorage.setItem('provider', JSON.stringify(response.data.provider))
           localStorage.setItem('isAuthenticated', 'true')
+          
+          // Store the Sanctum token
+          if (response.data.token) {
+            localStorage.setItem('auth_token', response.data.token)
+          }
         }
         
-        // Show success message briefly then redirect
+        // Show success message briefly then redirect to dashboard
         setTimeout(() => {
-          // In a real app, this would redirect to the provider dashboard
-          alert(`Welcome ${response.data.provider.full_name}! In a real app, this would redirect to your dashboard.`)
-          console.log('Provider logged in:', response.data.provider)
-          
-          // For demo purposes, you could redirect to a dashboard route
-          // navigate('/dashboard')
+          console.log('Provider logged in successfully, redirecting to dashboard...')
+          navigate('/dashboard')
         }, 1000)
         
       }
     } catch (err) {
       console.error('Login error:', err)
       
-      // Handle different types of errors from the API
+      // Handle different types of errors
       if (err.message.includes('Invalid credentials')) {
         setError('Invalid email/phone or password. Please try again.')
       } else if (err.message.includes('pending approval')) {

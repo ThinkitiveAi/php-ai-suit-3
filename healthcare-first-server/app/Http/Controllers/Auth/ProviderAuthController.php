@@ -98,8 +98,13 @@ class ProviderAuthController extends Controller
                 ], 403);
             }
 
-            // Create token (you'll need Laravel Sanctum for this)
-            // For now, we'll use session-based authentication
+            // Revoke existing tokens for security (optional)
+            $provider->tokens()->delete();
+
+            // Create Sanctum token
+            $token = $provider->createToken('provider-token', ['provider:access'])->plainTextToken;
+
+            // Also create session for stateful authentication
             Auth::guard('provider')->login($provider, $credentials['remember_me'] ?? false);
 
             return response()->json([
@@ -115,7 +120,9 @@ class ProviderAuthController extends Controller
                         'clinic_name' => $provider->clinic_name,
                         'profile_photo' => $provider->profile_photo ? Storage::url($provider->profile_photo) : null,
                         'status' => $provider->status,
-                    ]
+                    ],
+                    'token' => $token,
+                    'token_type' => 'Bearer'
                 ]
             ]);
 
@@ -140,6 +147,20 @@ class ProviderAuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         try {
+            // Get the authenticated provider
+            $provider = Auth::guard('provider')->user();
+            
+            // Revoke current token if using token authentication
+            if ($request->user('sanctum')) {
+                $request->user('sanctum')->currentAccessToken()->delete();
+            }
+            
+            // Revoke all tokens for this provider (optional - for complete logout from all devices)
+            if ($provider instanceof \App\Models\Provider) {
+                $provider->tokens()->delete();
+            }
+            
+            // Logout from session
             Auth::guard('provider')->logout();
             
             $request->session()->invalidate();

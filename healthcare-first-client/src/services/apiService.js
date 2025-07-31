@@ -13,6 +13,10 @@ const handleResponse = async (response) => {
 // Helper function to make API requests
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Get token from localStorage
+  const token = localStorage.getItem('auth_token');
+  
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -21,6 +25,11 @@ const makeRequest = async (endpoint, options = {}) => {
     credentials: 'include', // Important for session-based auth
     ...options,
   };
+
+  // Add Authorization header if token exists
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
   try {
     const response = await fetch(url, config);
