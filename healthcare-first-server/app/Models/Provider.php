@@ -238,4 +238,28 @@ class Provider extends Authenticatable
     {
         return $this->hasMany(Patient::class, 'created_by_provider_id');
     }
+
+    /**
+     * Get the provider's availabilities.
+     */
+    public function availabilities()
+    {
+        return $this->hasMany(ProviderAvailability::class);
+    }
+
+    /**
+     * Get the provider's appointment slots.
+     */
+    public function appointmentSlots()
+    {
+        return $this->hasMany(AppointmentSlot::class);
+    }
+
+    /**
+     * Get the provider's blocked days.
+     */
+    public function blockedDays()
+    {
+        return $this->hasMany(BlockedDay::class);
+    }
 }

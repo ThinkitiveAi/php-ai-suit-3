@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\ProviderAuthController;
 use App\Http\Controllers\Auth\PatientAuthController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\ProviderAvailabilityController;
+use App\Http\Controllers\AppointmentSlotController;
+use App\Http\Controllers\BlockedDayController;
 
 // CSRF cookie endpoint for Sanctum
 Route::get('/sanctum/csrf-cookie', function () {
@@ -16,6 +19,22 @@ Route::get('/test-cors', function (Request $request) {
     return response()->json([
         'message' => 'CORS is working!',
         'origin' => $request->headers->get('Origin'),
+        'timestamp' => now()
+    ]);
+});
+
+// Test route for availability
+Route::get('/test-availability', function () {
+    return response()->json([
+        'message' => 'Availability endpoint is working!',
+        'timestamp' => now()
+    ]);
+});
+
+// Test route for basic routing
+Route::get('/test-routing', function () {
+    return response()->json([
+        'message' => 'Basic routing is working!',
         'timestamp' => now()
     ]);
 });
@@ -41,7 +60,7 @@ Route::prefix('provider')->group(function () {
 });
 
 // Provider protected routes (authentication required)
-Route::prefix('provider')->middleware(['auth:sanctum,provider'])->group(function () {
+Route::prefix('provider')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [ProviderAuthController::class, 'logout']);
     Route::get('/profile', [ProviderAuthController::class, 'profile']);
     Route::put('/profile', [ProviderAuthController::class, 'updateProfile']);
@@ -52,6 +71,23 @@ Route::prefix('provider')->middleware(['auth:sanctum,provider'])->group(function
     Route::get('/patients/{patient}', [PatientController::class, 'show']);
     Route::put('/patients/{patient}', [PatientController::class, 'update']);
     Route::get('/patients-reference-data', [PatientController::class, 'referenceData']);
+    
+    // Availability management routes
+    Route::get('/availability', [ProviderAvailabilityController::class, 'index']);
+    Route::put('/availability', [ProviderAvailabilityController::class, 'update']);
+    Route::delete('/availability/{id}', [ProviderAvailabilityController::class, 'destroy']);
+    
+    // Appointment slots routes
+    Route::get('/slots', [AppointmentSlotController::class, 'index']);
+    Route::post('/slots', [AppointmentSlotController::class, 'store']);
+    Route::put('/slots/{id}', [AppointmentSlotController::class, 'update']);
+    Route::delete('/slots/{id}', [AppointmentSlotController::class, 'destroy']);
+    
+    // Blocked days routes
+    Route::get('/blocked-days', [BlockedDayController::class, 'index']);
+    Route::post('/blocked-days', [BlockedDayController::class, 'store']);
+    Route::put('/blocked-days/{id}', [BlockedDayController::class, 'update']);
+    Route::delete('/blocked-days/{id}', [BlockedDayController::class, 'destroy']);
 });
 
 // Patient routes (no authentication required) 
@@ -61,7 +97,10 @@ Route::prefix('patient')->group(function () {
 });
 
 // Patient protected routes (authentication required)
-Route::prefix('patient')->middleware(['auth:sanctum,patient'])->group(function () {
+Route::prefix('patient')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [PatientAuthController::class, 'logout']);
     Route::get('/profile', [PatientAuthController::class, 'profile']);
+    
+    // Patient can view provider availability
+    Route::get('/provider/availability/{providerId}', [ProviderAvailabilityController::class, 'showForPatient']);
 }); 

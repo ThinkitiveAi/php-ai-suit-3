@@ -42,13 +42,18 @@ return [
         ],
         
         'provider' => [
-            'driver' => 'session',
+            'driver' => 'sanctum',
             'provider' => 'providers',
         ],
 
         'patient' => [
-            'driver' => 'session',
+            'driver' => 'sanctum',
             'provider' => 'patients',
+        ],
+
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
         ],
     ],
 

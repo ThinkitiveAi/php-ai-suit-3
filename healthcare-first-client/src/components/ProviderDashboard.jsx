@@ -137,6 +137,9 @@ const ProviderDashboard = () => {
               <button className="action-btn" onClick={() => navigate('/provider/patients/create')}>
                 ➕ Add New Patient
               </button>
+              <button className="action-btn" onClick={() => navigate('/provider/availability')}>
+                📅 Manage Availability
+              </button>
               <button className="action-btn">
                 📅 View Appointments
               </button>

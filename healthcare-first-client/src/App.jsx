@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ProviderLogin from './components/ProviderLogin'
 import ProviderRegistration from './components/ProviderRegistration'
 import ProviderDashboard from './components/ProviderDashboard'
+import ProviderAvailability from './components/ProviderAvailability'
 import PatientLogin from './components/PatientLogin'
 import PatientDashboard from './components/PatientDashboard'
 import PatientManagement from './components/PatientManagement'
@@ -67,6 +68,24 @@ function App() {
             } 
           />
 
+          {/* Provider Availability Routes */}
+          <Route 
+            path="/provider/availability" 
+            element={
+              <ProtectedProviderRoute>
+                <ProviderAvailability />
+              </ProtectedProviderRoute>
+            } 
+          />
+          <Route 
+            path="/provider/availability/:providerId" 
+            element={
+              <ProtectedPatientRoute>
+                <ProviderAvailability />
+              </ProtectedPatientRoute>
+            } 
+          />
+
           {/* Patient Routes */}
           <Route path="/patient/login" element={<PatientLogin />} />
           <Route path="/patient" element={<Navigate to="/patient/login" replace />} />
@@ -78,7 +97,7 @@ function App() {
               </ProtectedPatientRoute>
             } 
           />
-          
+
           {/* Default Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

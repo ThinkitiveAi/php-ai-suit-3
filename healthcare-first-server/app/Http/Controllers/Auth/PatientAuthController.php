@@ -57,9 +57,6 @@ class PatientAuthController extends Controller
             // Create Sanctum token
             $token = $patient->createToken('patient-token', ['patient:access'])->plainTextToken;
 
-            // Also create session for stateful authentication
-            Auth::guard('patient')->login($patient, $request->remember_me ?? false);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful!',
@@ -107,25 +104,14 @@ class PatientAuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         try {
-            // Get the authenticated patient
-            $patient = Auth::guard('patient')->user();
+            // Get the authenticated patient from Sanctum
+            $patient = $request->user();
             
-            // Revoke current token if using token authentication
-            if ($request->user('sanctum')) {
-                $request->user('sanctum')->currentAccessToken()->delete();
+            // Revoke current token
+            if ($patient) {
+                $patient->currentAccessToken()->delete();
             }
             
-            // Revoke all tokens for this patient
-            if ($patient instanceof \App\Models\Patient) {
-                $patient->tokens()->delete();
-            }
-            
-            // Logout from session
-            Auth::guard('patient')->logout();
-            
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
             return response()->json([
                 'success' => true,
                 'message' => 'Logged out successfully.'
@@ -146,8 +132,8 @@ class PatientAuthController extends Controller
     public function profile(Request $request): JsonResponse
     {
         try {
-            $patient = Auth::guard('patient')->user();
-
+            $patient = $request->user();
+            
             if (!$patient) {
                 return response()->json([
                     'success' => false,
@@ -161,19 +147,20 @@ class PatientAuthController extends Controller
                     'patient' => [
                         'id' => $patient->id,
                         'patient_id' => $patient->patient_id,
-                        'first_name' => $patient->first_name,
-                        'last_name' => $patient->last_name,
                         'full_name' => $patient->full_name,
                         'email' => $patient->email,
                         'phone' => $patient->phone,
                         'date_of_birth' => $patient->date_of_birth->format('Y-m-d'),
                         'age' => $patient->age,
                         'gender' => $patient->gender,
-                        'full_address' => $patient->full_address,
                         'blood_type' => $patient->blood_type,
                         'allergies' => $patient->allergies,
                         'medical_history' => $patient->medical_history,
                         'current_medications' => $patient->current_medications,
+                        'street_address' => $patient->street_address,
+                        'city' => $patient->city,
+                        'state' => $patient->state,
+                        'zip_code' => $patient->zip_code,
                         'emergency_contact_name' => $patient->emergency_contact_name,
                         'emergency_contact_phone' => $patient->emergency_contact_phone,
                         'emergency_contact_relation' => $patient->emergency_contact_relation,
@@ -184,11 +171,11 @@ class PatientAuthController extends Controller
                             'name' => $patient->assignedProvider->full_name,
                             'specialization' => $patient->assignedProvider->specialization,
                             'clinic_name' => $patient->assignedProvider->clinic_name,
-                            'email' => $patient->assignedProvider->email,
                             'phone' => $patient->assignedProvider->phone,
+                            'email' => $patient->assignedProvider->email,
                         ],
                         'status' => $patient->status,
-                        'email_verified_at' => $patient->email_verified_at,
+                        'notes' => $patient->notes,
                     ]
                 ]
             ]);

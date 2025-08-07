@@ -104,9 +104,6 @@ class ProviderAuthController extends Controller
             // Create Sanctum token
             $token = $provider->createToken('provider-token', ['provider:access'])->plainTextToken;
 
-            // Also create session for stateful authentication
-            Auth::guard('provider')->login($provider, $credentials['remember_me'] ?? false);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful!',
@@ -147,24 +144,18 @@ class ProviderAuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         try {
-            // Get the authenticated provider
-            $provider = Auth::guard('provider')->user();
+            // Get the authenticated provider from Sanctum
+            $provider = $request->user();
             
-            // Revoke current token if using token authentication
-            if ($request->user('sanctum')) {
-                $request->user('sanctum')->currentAccessToken()->delete();
+            // Revoke current token
+            if ($provider) {
+                $provider->currentAccessToken()->delete();
             }
             
             // Revoke all tokens for this provider (optional - for complete logout from all devices)
             if ($provider instanceof \App\Models\Provider) {
                 $provider->tokens()->delete();
             }
-            
-            // Logout from session
-            Auth::guard('provider')->logout();
-            
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
 
             return response()->json([
                 'success' => true,
