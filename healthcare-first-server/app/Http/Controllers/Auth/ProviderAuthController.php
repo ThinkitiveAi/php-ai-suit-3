@@ -177,7 +177,7 @@ class ProviderAuthController extends Controller
     public function profile(Request $request): JsonResponse
     {
         try {
-            $provider = Auth::guard('provider')->user();
+            $provider = $request->user();
 
             if (!$provider) {
                 return response()->json([
