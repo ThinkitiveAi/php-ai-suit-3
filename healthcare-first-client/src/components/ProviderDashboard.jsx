@@ -140,7 +140,7 @@ const ProviderDashboard = () => {
               <button className="action-btn" onClick={() => navigate('/provider/availability')}>
                 📅 Manage Availability
               </button>
-              <button className="action-btn">
+              <button className="dashboard-btn" onClick={() => navigate('/provider/appointments')}>
                 📅 View Appointments
               </button>
               <button className="action-btn">

@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class PatientAppointmentController extends Controller
 {
@@ -135,7 +136,7 @@ class PatientAppointmentController extends Controller
             return response()->json(['success' => false, 'message' => 'Provider not found.'], 404);
         }
 
-        $date = \Carbon\Carbon::parse($request->date);
+        $date = Carbon::parse($request->date);
         $dayKey = strtolower($date->format('l'));
 
         $availability = $provider->availabilities()->where('day_of_week', $dayKey)->first();
@@ -143,35 +144,43 @@ class PatientAppointmentController extends Controller
             return response()->json(['success' => true, 'data' => ['slots' => []]]);
         }
 
+        $tz = $availability->timezone ?? 'UTC';
         $slotDuration = (int)($request->slot_duration ?? 30);
-        $start = \Carbon\Carbon::parse($availability->start_time);
-        $end = \Carbon\Carbon::parse($availability->end_time);
+
+        $start = Carbon::createFromFormat('Y-m-d H:i', $date->toDateString().' '.(is_object($availability->start_time) ? $availability->start_time->format('H:i') : $availability->start_time), $tz);
+        $end = Carbon::createFromFormat('Y-m-d H:i', $date->toDateString().' '.(is_object($availability->end_time) ? $availability->end_time->format('H:i') : $availability->end_time), $tz);
         if ($end->lessThanOrEqualTo($start)) {
             return response()->json(['success' => true, 'data' => ['slots' => []]]);
         }
 
-        // Existing booked slots for the day
+        // Existing slots for the day
         $existing = AppointmentSlot::where('provider_id', $provider->id)
             ->where('date', $date->toDateString())
             ->get();
 
         $generated = [];
-        $cursor = (clone $start);
-        while ($cursor->addMinutes(0)->lessThan($end)) {
+        $cursor = $start->copy();
+        while ($cursor->lessThan($end)) {
             $slotStart = $cursor->copy();
             $slotEnd = $slotStart->copy()->addMinutes($slotDuration);
-            if ($slotEnd->greaterThan($end)) break;
+            if ($slotEnd->greaterThan($end)) {
+                break;
+            }
 
-            // Check existing conflicts
-            $conflict = $existing->first(function ($s) use ($slotStart, $slotEnd) {
-                return !($s->end_time <= $slotStart->format('H:i') || $s->start_time >= $slotEnd->format('H:i'));
+            // Check conflicts against existing slots
+            $slotStartH = $slotStart->format('H:i');
+            $slotEndH = $slotEnd->format('H:i');
+            $conflict = $existing->first(function ($s) use ($slotStartH, $slotEndH) {
+                $sStart = is_object($s->start_time) ? $s->start_time->format('H:i') : $s->start_time;
+                $sEnd = is_object($s->end_time) ? $s->end_time->format('H:i') : $s->end_time;
+                return !($sEnd <= $slotStartH || $sStart >= $slotEndH);
             });
 
             $generated[] = [
                 'date' => $date->toDateString(),
-                'start_time' => $slotStart->format('H:i'),
-                'end_time' => $slotEnd->format('H:i'),
-                'timezone' => $availability->timezone ?? 'UTC',
+                'start_time' => $slotStartH,
+                'end_time' => $slotEndH,
+                'timezone' => $tz,
                 'is_booked' => (bool)($conflict?->is_booked),
                 'existing_slot_id' => $conflict?->id,
             ];
@@ -179,7 +188,7 @@ class PatientAppointmentController extends Controller
             $cursor->addMinutes($slotDuration);
         }
 
-        // Filter out booked
+        // Only return not booked slots
         $generated = array_values(array_filter($generated, fn($g) => $g['is_booked'] === false));
 
         return response()->json(['success' => true, 'data' => ['slots' => $generated]]);
@@ -205,12 +214,19 @@ class PatientAppointmentController extends Controller
         }
 
         // Ensure weekly availability allows this day/time window
-        $dayKey = strtolower(\Carbon\Carbon::parse($request->date)->format('l'));
+        $dayKey = strtolower(Carbon::parse($request->date)->format('l'));
         $availability = $provider->availabilities()->where('day_of_week', $dayKey)->first();
         if (!$availability || !$availability->is_active) {
             return response()->json(['success' => false, 'message' => 'Provider not available on selected date.'], 422);
         }
-        if ($request->start_time < $availability->start_time || $request->end_time > $availability->end_time) {
+
+        $tz = $availability->timezone ?? 'UTC';
+        $availStart = Carbon::createFromFormat('Y-m-d H:i', $request->date.' '.(is_object($availability->start_time) ? $availability->start_time->format('H:i') : $availability->start_time), $tz);
+        $availEnd = Carbon::createFromFormat('Y-m-d H:i', $request->date.' '.(is_object($availability->end_time) ? $availability->end_time->format('H:i') : $availability->end_time), $tz);
+        $requestedStart = Carbon::createFromFormat('Y-m-d H:i', $request->date.' '.$request->start_time, $tz);
+        $requestedEnd = Carbon::createFromFormat('Y-m-d H:i', $request->date.' '.$request->end_time, $tz);
+
+        if ($requestedStart->lt($availStart) || $requestedEnd->gt($availEnd)) {
             return response()->json(['success' => false, 'message' => 'Selected time outside provider availability.'], 422);
         }
 
@@ -236,9 +252,9 @@ class PatientAppointmentController extends Controller
                     'date' => $request->date,
                     'start_time' => $request->start_time,
                     'end_time' => $request->end_time,
-                    'timezone' => $availability->timezone ?? 'UTC',
+                    'timezone' => $tz,
                     'appointment_type' => 'consultation',
-                    'slot_duration' => \Carbon\Carbon::parse($request->start_time)->diffInMinutes(\Carbon\Carbon::parse($request->end_time)),
+                    'slot_duration' => $requestedStart->diffInMinutes($requestedEnd),
                     'break_duration' => 0,
                     'max_appointments' => 1,
                     'location_type' => 'virtual',

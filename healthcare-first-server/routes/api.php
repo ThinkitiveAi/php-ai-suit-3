@@ -83,6 +83,11 @@ Route::prefix('provider')->middleware(['auth:provider'])->group(function () {
     Route::put('/slots/{id}', [AppointmentSlotController::class, 'update']);
     Route::delete('/slots/{id}', [AppointmentSlotController::class, 'destroy']);
     
+    // Provider appointment management routes
+    Route::get('/appointments', [\App\Http\Controllers\ProviderAppointmentController::class, 'index']);
+    Route::put('/appointments/{id}/status', [\App\Http\Controllers\ProviderAppointmentController::class, 'updateStatus']);
+    Route::get('/appointments/statistics', [\App\Http\Controllers\ProviderAppointmentController::class, 'statistics']);
+    
     // Blocked days routes
     Route::get('/blocked-days', [BlockedDayController::class, 'index']);
     Route::post('/blocked-days', [BlockedDayController::class, 'store']);
