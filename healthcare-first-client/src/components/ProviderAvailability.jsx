@@ -72,6 +72,7 @@ const ProviderAvailability = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -147,6 +148,7 @@ const ProviderAvailability = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           availabilities: availabilities.map(day => ({
@@ -191,6 +193,7 @@ const ProviderAvailability = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 

@@ -60,7 +60,7 @@ Route::prefix('provider')->group(function () {
 });
 
 // Provider protected routes (authentication required)
-Route::prefix('provider')->middleware(['auth:sanctum'])->group(function () {
+Route::prefix('provider')->middleware(['auth:provider'])->group(function () {
     Route::post('/logout', [ProviderAuthController::class, 'logout']);
     Route::get('/profile', [ProviderAuthController::class, 'profile']);
     Route::put('/profile', [ProviderAuthController::class, 'updateProfile']);
@@ -97,10 +97,18 @@ Route::prefix('patient')->group(function () {
 });
 
 // Patient protected routes (authentication required)
-Route::prefix('patient')->middleware(['auth:sanctum'])->group(function () {
+Route::prefix('patient')->middleware(['auth:patient'])->group(function () {
     Route::post('/logout', [PatientAuthController::class, 'logout']);
     Route::get('/profile', [PatientAuthController::class, 'profile']);
-    
+
     // Patient can view provider availability
     Route::get('/provider/availability/{providerId}', [ProviderAvailabilityController::class, 'showForPatient']);
+    Route::get('/provider/availability/{providerId}/by-date', [ProviderAvailabilityController::class, 'showForPatientDate']);
+
+    // Patient appointment booking
+    Route::get('/providers', [\App\Http\Controllers\PatientAppointmentController::class, 'listProviders']);
+    Route::get('/providers/{providerId}/slots', [\App\Http\Controllers\PatientAppointmentController::class, 'listAvailableSlots']);
+    Route::post('/appointments/book', [\App\Http\Controllers\PatientAppointmentController::class, 'book']);
+    Route::get('/providers/{providerId}/generated-slots', [\App\Http\Controllers\PatientAppointmentController::class, 'generateSlots']);
+    Route::post('/appointments/book-by-time', [\App\Http\Controllers\PatientAppointmentController::class, 'bookByTime']);
 }); 

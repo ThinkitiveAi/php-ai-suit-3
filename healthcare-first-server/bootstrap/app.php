@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             // \App\Http\Middleware\CorsMiddleware::class,
         ]);
+        
+        // Ensure our custom Authenticate middleware is used
+        $middleware->alias(['auth' => \App\Http\Middleware\Authenticate::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

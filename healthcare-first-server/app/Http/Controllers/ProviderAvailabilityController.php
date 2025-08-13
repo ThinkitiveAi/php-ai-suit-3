@@ -7,6 +7,7 @@ use App\Models\ProviderAvailability;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class ProviderAvailabilityController extends Controller
 {
@@ -110,6 +111,15 @@ class ProviderAvailabilityController extends Controller
             foreach ($availabilities as $availabilityData) {
                 $dayOfWeek = $availabilityData['day_of_week'];
                 $isActive = $availabilityData['is_active'] ?? false;
+
+                // If the day is marked inactive, remove any existing availability record and continue
+                if (!$isActive) {
+                    $existing = $provider->availabilities()->where('day_of_week', $dayOfWeek)->first();
+                    if ($existing) {
+                        $existing->delete();
+                    }
+                    continue;
+                }
                 
                 if ($isActive && (!isset($availabilityData['start_time']) || !isset($availabilityData['end_time']))) {
                     return response()->json([
@@ -118,14 +128,14 @@ class ProviderAvailabilityController extends Controller
                     ], 422);
                 }
 
-                // Update or create availability
-                $availability = $provider->availabilities()->updateOrCreate(
+                // Update or create availability for active days
+                $provider->availabilities()->updateOrCreate(
                     ['day_of_week' => $dayOfWeek],
                     [
-                        'start_time' => $availabilityData['start_time'] ?? null,
-                        'end_time' => $availabilityData['end_time'] ?? null,
+                        'start_time' => $availabilityData['start_time'],
+                        'end_time' => $availabilityData['end_time'],
                         'timezone' => $availabilityData['timezone'] ?? 'UTC',
-                        'is_active' => $isActive,
+                        'is_active' => true,
                     ]
                 );
             }
@@ -251,6 +261,61 @@ class ProviderAvailabilityController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve availability settings.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get a provider's availability for a specific date (patient view).
+     */
+    public function showForPatientDate(Request $request, $providerId): JsonResponse
+    {
+        try {
+            $patient = $request->user();
+            if (!$patient) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.'
+                ], 401);
+            }
+
+            $request->validate([
+                'date' => 'required|date',
+            ]);
+
+            $provider = Provider::find($providerId);
+            if (!$provider) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Provider not found.'
+                ], 404);
+            }
+
+            $date = Carbon::parse($request->get('date'));
+            $dayKey = strtolower($date->format('l')); // e.g. "monday"
+
+            $availability = $provider->availabilities()->where('day_of_week', $dayKey)->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'provider' => [
+                        'id' => $provider->id,
+                        'name' => $provider->full_name,
+                    ],
+                    'date' => $date->toDateString(),
+                    'day_of_week' => $dayKey,
+                    'is_available' => (bool)($availability?->is_active),
+                    'start_time' => ($availability && $availability->is_active) ? Carbon::parse($availability->start_time)->format('H:i') : null,
+                    'end_time' => ($availability && $availability->is_active) ? Carbon::parse($availability->end_time)->format('H:i') : null,
+                    'timezone' => $availability?->timezone ?? 'UTC',
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve date availability.',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }

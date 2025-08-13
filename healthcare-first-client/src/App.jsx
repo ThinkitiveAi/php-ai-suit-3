@@ -10,6 +10,7 @@ import PatientManagement from './components/PatientManagement'
 import CreatePatient from './components/CreatePatient'
 import LandingPage from './components/LandingPage'
 import './App.css'
+import PatientAppointment from './components/PatientAppointment'
 
 // Protected Route component for providers
 const ProtectedProviderRoute = ({ children }) => {
@@ -94,6 +95,14 @@ function App() {
             element={
               <ProtectedPatientRoute>
                 <PatientDashboard />
+              </ProtectedPatientRoute>
+            } 
+          />
+          <Route 
+            path="/patient/appointments" 
+            element={
+              <ProtectedPatientRoute>
+                <PatientAppointment />
               </ProtectedPatientRoute>
             } 
           />

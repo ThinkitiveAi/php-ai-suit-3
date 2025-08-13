@@ -1,0 +1,43 @@
+/* Patient Appointment Styles */
+.patient-appointment { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.pa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.pa-title h1 { margin: 0; font-size: 24px; }
+.pa-title p { margin: 4px 0 0; color: #666; font-size: 14px; }
+.pa-back { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.pa-alert { padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
+.pa-alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.pa-filters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 16px; }
+.pa-search input { width: 280px; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px; }
+.pa-dates label { display: flex; gap: 6px; align-items: center; margin-right: 8px; color: #374151; font-size: 14px; }
+.pa-dates input { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; }
+.pa-apply { padding: 8px 12px; border-radius: 6px; border: 1px solid #e5e7eb; background: #111827; color: white; cursor: pointer; }
+.pa-content { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+.pa-section-title { font-weight: 600; margin-bottom: 10px; }
+.pa-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.pa-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: white; display: flex; flex-direction: column; justify-content: space-between; }
+.pa-card.active { border-color: #111827; box-shadow: 0 0 0 2px #1118270f; }
+.pa-card-main { display: flex; gap: 12px; align-items: center; }
+.pa-avatar { width: 40px; height: 40px; background: #111827; color: white; display: flex; align-items: center; justify-content: center; border-radius: 9999px; font-weight: 700; }
+.pa-meta { display: flex; flex-direction: column; gap: 4px; }
+.pa-name { font-weight: 600; }
+.pa-sub { color: #6b7280; font-size: 13px; }
+.pa-sub.muted { color: #9ca3af; }
+.pa-card-actions { margin-top: 10px; }
+.pa-btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb; cursor: pointer; }
+.pa-btn.primary { background: #2563eb; border-color: #2563eb; color: white; }
+.pa-empty { padding: 16px; border: 1px dashed #e5e7eb; color: #6b7280; border-radius: 8px; text-align: center; }
+.pa-slot-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.pa-slot-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: white; display: grid; grid-template-rows: auto auto auto auto; gap: 8px; }
+.pa-slot-time { display: flex; align-items: baseline; justify-content: space-between; }
+.pa-slot-date { font-weight: 600; }
+.pa-slot-range { color: #6b7280; font-size: 13px; }
+.pa-slot-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { padding: 4px 8px; background: #eef2ff; color: #3730a3; border-radius: 999px; font-size: 12px; }
+.pill.alt { background: #ecfeff; color: #164e63; }
+.pa-slot-fee { font-weight: 600; }
+.pa-slot-fee.muted { color: #9ca3af; font-weight: 500; }
+.pa-skeleton { height: 120px; background: linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 8px; }
+.pa-skeleton.wide { height: 80px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+@media (max-width: 900px) { .pa-content { grid-template-columns: 1fr; } .pa-search input { width: 100%; } } 

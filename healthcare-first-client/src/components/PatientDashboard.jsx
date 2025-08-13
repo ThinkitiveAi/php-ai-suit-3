@@ -258,8 +258,8 @@ const PatientDashboard = () => {
           <div className="dashboard-card actions-card">
             <h3>⚡ Quick Actions</h3>
             <div className="action-buttons">
-              <button className="action-btn appointments-btn">
-                📅 View Appointments
+              <button className="action-btn appointments-btn" onClick={() => navigate('/patient/appointments')}>
+                📅 Book Appointment
               </button>
               <button className="action-btn records-btn">
                 📋 Medical Records
